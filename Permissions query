@@ -1,0 +1,21 @@
+Select * from (select p.id, p.name,su.name as "owner", su.friendly_name as "friendlyName",
+p.luid,s.luid sluid, parent_project_id parent_id,NULL parentName, p.created_at,p.updated_at,
+'PROJECT' HIER_LEVEL, s.name site_name, '' repository_url,  TO_DATE('01-Dec-1900','DD-Mon-YYYY')
+refreshed_at  from projects p, sites s ,users u , system_users su  where p.site_id = s.id and p.owner_id=u.id 
+and u.system_user_id=su.id and parent_project_id is null and  p.state = 'active'  UNION ALL select p.id, 
+p.name,su.name as "Owner Name", su.friendly_name as "friendlyName",p.luid,s.luid,p.parent_project_id parent_id, 
+q.name as  "Parent Object Name ",p.created_at,p.updated_at,'SUB fOLDER' HIER_LEVEL,s.name site_name, '',  
+TO_DATE('01-Dec-1900','DD-Mon-YYYY') As   "Extract Refreshed At " from projects p, sites s , projects q ,users u , 
+system_users su where p.site_id = s.id  and p.owner_id=u.id and u.system_user_id=su.id and p.parent_project_id is not null 
+and p.parent_project_id=q.id and  p.state = 'active'  UNION ALL  select w.id, w.name,su.name as "Owner Name", 
+su.friendly_name as "friendlyName", w.luid,s.luid,  w.project_id parent_id,case when pp.name is not null then
+pp.name else p.name end as  "Parent Object Name",w.created_at,w.updated_at, 'WORKBOOK' HIER_LEVEL, s.name site_name, 
+w.repository_url||'/'||sheet_id,  w.extracts_refreshed_at As  "Workbook Refreshed At" from workbooks w 
+join sites s on w.site_id = s.id  join views v on w.id = v.workbook_id and  v.state = 'active' and v
+.index = 1 join projects p on w.project_id=p.id join users u on w.owner_id=u.id join system_users su on
+u.system_user_id=su.id left outer join projects pp on p.parent_project_id = pp.id where  w.state = 'active'
+union all  select d.id, d.name,su.name as "Owner Name", su.friendly_name as "friendlyName", d.luid,s.luid, 
+d.project_id parent_id, p.name as  "Parent Object Name" ,  d.created_at,d.updated_at, 'DATASOURCE' HIER_LEVEL, 
+s.name site_name,  d.repository_url, d.extracts_refreshed_at AS  "DataSource Refreshed At"  from datasources d,
+sites s, projects p,users u , system_users su where d.site_id = s.id and d.state = 'active' 
+and p.id= d.project_id and d.owner_id=u.id and u.system_user_id=su.id and d.asset_key_id= '1' )a 
