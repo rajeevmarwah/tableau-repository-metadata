@@ -1,0 +1,2 @@
+select su.name,su.email,su.friendly_name,
+g.name from users u, groups g, group_users gu,system_users su where u.id=gu.user_id and g.id=gu.group_id and u.system_user_id=su.id order by g.name
